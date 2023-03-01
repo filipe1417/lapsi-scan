@@ -29,15 +29,25 @@ VERSAO=$(\
     | cut -d " " -f 2 \
 )
 
-MENSAGEM_DE_INICIO="
+MENSAGEM_MENU_INICIAL="
 $(greenprint "##########  TELA INICIAL  ##########")
 $(greenprint "Versão atual: $VERSAO")
+$(greenprint "Nota: Algumas funcionalidades podem demandar privilegios de superusuário\nNesses casos, será indicado com 'sudo' ao lado da opção.")
 
 Para utilizar a ferramenta, escolha uma das seguintes opções:
 $(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan")
 $(yellowprint "2.") $(blueprint "Port scan em portas específicas")
 $(yellowprint "3.") $(blueprint "Ping sweep em toda subrede")
-$(yellowprint "4.") $(redprint "Sair do programa")
+$(yellowprint "4.") $(blueprint "Ataques")
+$(yellowprint "5.") $(redprint "Sair do programa")
+"
+
+MENSAGEM_MENU_ATAQUES="
+$(greenprint "##########  LISTA DE ATAQUES  ##########")
+$(redprint "A UTILIZAÇÃO DE ATAQUES DEVE SER FEITA DE FORMA CONTROLADA. UTILIZAR SEM CONHECIMENTO PODE CAUSAR DANOS À PROPRIEDADE ALHEIA")
+
+
+$(yellowprint "1.") $(blueprint "ARP poisoning/spoofing (sudo)")
 "
 
 
@@ -68,7 +78,7 @@ scan_completo() {
 
 
 menu_inicial(){
-    echo -e "$MENSAGEM_DE_INICIO"	
+    echo -e "$MENSAGEM_MENU_INICIAL"	
     read -r opcao
     case $opcao in
         '1')
