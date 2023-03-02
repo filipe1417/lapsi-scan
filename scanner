@@ -7,10 +7,11 @@
 #	*. Salvar IP em algum lugar para reutilização - quando se quer utilizar vários scans para o mesmo IP, não deveria precisar ficar digitando novamente 						      
 #	*. Salvar em arquivos os scans		
 #   *. Separar o scan completo em funções diferentes
-#							      
+#	*. Separar print de textos e leitura de valores digitados da ação da função (não deixar dentro uma função que realiza um ataque, por exemplo, prints de algum texto)    
+#   *. Salvar no histórico o scan anterior
 #Versão 1.0 - Arquivo inicial do script                      
 #Versão 1.1 - Separação por funções e opção de scan completo							      
-#							      
+#Versão 1.2 - Introdução do menu de ataques, já com arp poisoning						      
 ###############################################################
 
 ESC=$(printf '\033') RESET="${ESC}[0m" RED="${ESC}[31m"
@@ -38,18 +39,28 @@ Para utilizar a ferramenta, escolha uma das seguintes opções:
 $(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan")
 $(yellowprint "2.") $(blueprint "Port scan em portas específicas")
 $(yellowprint "3.") $(blueprint "Ping sweep em toda subrede")
-$(yellowprint "4.") $(blueprint "Ataques")
+$(yellowprint "4.") $(blueprint "Menu de ataques")
 $(yellowprint "5.") $(redprint "Sair do programa")
 "
 
 MENSAGEM_MENU_ATAQUES="
 $(greenprint "##########  LISTA DE ATAQUES  ##########")
-$(redprint "A UTILIZAÇÃO DE ATAQUES DEVE SER FEITA DE FORMA CONTROLADA. UTILIZAR SEM CONHECIMENTO PODE CAUSAR DANOS À PROPRIEDADE ALHEIA")
+$(redprint "A UTILIZAÇÃO DE ATAQUES DEVE SER FEITA DE FORMA CONTROLADA. UTILIZE EM AMBIENTES PERMITIDOS")
 
 
-$(yellowprint "1.") $(blueprint "ARP poisoning/spoofing (sudo)")
+$(yellowprint "1.") $(blueprint "ARP poisoning/spoofing - Negação de serviço") $(magentaprint "(sudo)")
+$(yellowprint "2.") $(blueprint "ARP poisoning/spoofing - Interceptação") $(magentaprint "(sudo)")
+$(yellowprint "3.") $(blueprint "Voltar")
+$(yellowprint "4.") $(redprint "Sair do programa")
 "
 
+checa_sudo(){
+    if [ "$EUID" -ne 0 ]
+    then 
+        echo "Para utilizar essa função, inicie o script utilizando 'sudo'"
+        exit
+    fi
+}
 
 port_scan() {
     echo "portscan"
@@ -60,11 +71,23 @@ ping_sweep() {
     echo "pingsweep"
 }
 
+arp_poison(){
+    #Depois separar os echos e reads da ação em si
+    checa_sudo
+    ARQUIVO_IP_FORWARD="/proc/sys/net/ipv4/ip_forward"
+    ESTADO_ANTERIOR=$(cat $ARQUIVO_IP_FORWARD)
+    echo $1 > $ARQUIVO_IP_FORWARD
+    echo -e "Digite o endereço IP do primeiro alvo"
+    read -r IP_ALVO_1
+    echo -e "Digite o endereço IP do segundo alvo"
+    read -r IP_ALVO_2
+    python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
+    echo "$ESTADO_ANTERIOR" > $ARQUIVO_IP_FORWARD
+}
 
 scan_completo() {
-
     tmpfile=$(mktemp /tmp/ips.XXXXXX)
-    # trabalhando com file descriptors para caso de crash, o arquivo temporário ja vai ter sido apagado e o file descript é apagado também ao fechar o shell
+    # trabalhando com file descriptors para que em caso de crash o arquivo temporário ja vai ter sido apagado e o file descript é apagado também ao fechar o shell
     exec 3> "$tmpfile" # escrita - file descriptor 3
     exec 4< "$tmpfile" # leitura - file descriptor 4
     rm "$tmpfile"
@@ -76,6 +99,26 @@ scan_completo() {
     exec 3>&- # fechar o file descriptor
 }
 
+menu_ataques(){
+    echo -e "$MENSAGEM_MENU_ATAQUES"
+    read -r opcao
+
+    case $opcao in
+        '1' | '2' )
+            #parece ser equivalente a fazer um fallthrough no case onde a unica opção que muda é a de ativar ou desativar o ip forwarding
+            arp_poison "$(($opcao-1))" #nesse caso, opção 1 vai ser igual a escrever 0 no arquivo de ip forward (bloquear passagem) e opção 2 vai ser 1 no arquivo (permitir passagem)
+        ;;
+        '3')
+            menu_inicial
+        ;;
+        '4')
+            exit 0
+        ;;
+        *)
+            echo "Opção inválida"
+        ;;
+    esac
+}
 
 menu_inicial(){
     echo -e "$MENSAGEM_MENU_INICIAL"	
@@ -107,6 +150,10 @@ Exemplo: 192.168.1.0/24\n"
             nmap -sP $IP | grep "report" | cut -d " " -f5-
         ;;
         '4')
+            menu_ataques
+            
+        ;;
+        '5')
             #clear
             exit 0
         ;;
@@ -115,7 +162,6 @@ Exemplo: 192.168.1.0/24\n"
         ;;
     esac
 }
-
 
 main() {
     while true; do
