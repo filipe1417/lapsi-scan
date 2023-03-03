@@ -149,7 +149,8 @@ Exemplo: 192.168.1.0/24\n"
             read -r IP
             echo "O ping sweep está sendo realizado..."
             echo -e "Os seguintes hosts estão ativos:\n"
-            nmap -sP $IP | grep "report" | cut -d " " -f5-
+            #nmap -sP $IP | grep "report" | cut -d " " -f5-
+            fping -g -s -a -i 1 -r 1 $IP 2> /dev/null
         ;;
         '4')
             menu_ataques
