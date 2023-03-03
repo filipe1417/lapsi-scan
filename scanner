@@ -100,6 +100,7 @@ scan_completo() {
 }
 
 menu_ataques(){
+    clear
     echo -e "$MENSAGEM_MENU_ATAQUES"
     read -r opcao
 
@@ -121,6 +122,7 @@ menu_ataques(){
 }
 
 menu_inicial(){
+    clear
     echo -e "$MENSAGEM_MENU_INICIAL"	
     read -r opcao
     case $opcao in
@@ -146,12 +148,11 @@ Exemplo: 192.168.1.0/24\n"
             echo "Digite a subrede no formato 10.0.0.0/24"
             read -r IP
             echo "O ping sweep está sendo realizado..."
-            echo "Os seguintes hosts estão ativos:"
+            echo -e "Os seguintes hosts estão ativos:\n"
             nmap -sP $IP | grep "report" | cut -d " " -f5-
         ;;
         '4')
             menu_ataques
-            
         ;;
         '5')
             #clear
@@ -161,6 +162,8 @@ Exemplo: 192.168.1.0/24\n"
             echo "Opção inválida"
         ;;
     esac
+    echo -e "\n"
+    read -n 1 -s -p "Digite qualquer tecla para continuar e voltar para o menu"
 }
 
 main() {
