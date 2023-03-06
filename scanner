@@ -1,17 +1,13 @@
 #!/usr/bin/bash
 
 ###############################################################
-#   TO-DO
 #	
-#	*. Mais opções e integrar outras ferramentas						     
-#	*. Salvar IP em algum lugar para reutilização - quando se quer utilizar vários scans para o mesmo IP, não deveria precisar ficar digitando novamente 						      
-#	*. Salvar em arquivos os scans		
-#   *. Separar o scan completo em funções diferentes
-#	*. Separar print de textos e leitura de valores digitados da ação da função (não deixar dentro uma função que realiza um ataque, por exemplo, prints de algum texto)    
-#   *. Salvar no histórico o scan anterior
+#	
 #Versão 1.0 - Arquivo inicial do script                      
 #Versão 1.1 - Separação por funções e opção de scan completo							      
 #Versão 1.2 - Introdução do menu de ataques, já com arp poisoning						      
+#Versão 1.3 - Repaginada na aparência e resolução de bugs
+#
 ###############################################################
 RED='\033[0;31m'
 GREEN='\033[0;32m'
