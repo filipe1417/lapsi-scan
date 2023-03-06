@@ -101,6 +101,7 @@ scan_completo() {
 
 menu_ataques(){
     clear
+    unset opcao
     echo -e "$MENSAGEM_MENU_ATAQUES"
     read -r opcao
 
@@ -123,6 +124,7 @@ menu_ataques(){
 
 menu_inicial(){
     clear
+    unset opcao
     echo -e "$MENSAGEM_MENU_INICIAL"	
     read -r opcao
     case $opcao in
@@ -163,8 +165,10 @@ Exemplo: 192.168.1.0/24\n"
             echo "Opção inválida"
         ;;
     esac
-    echo -e "\n"
-    read -n 1 -s -p "Digite qualquer tecla para continuar e voltar para o menu"
+    #echo -e "\nDigite Enter para voltar"
+    #read -r -sN3 p
+    printf "%s " "Press enter to continue"
+    read ans
 }
 
 main() {
