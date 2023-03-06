@@ -13,14 +13,56 @@
 #Versão 1.1 - Separação por funções e opção de scan completo							      
 #Versão 1.2 - Introdução do menu de ataques, já com arp poisoning						      
 ###############################################################
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+BLUE='\033[0;34m'
+
+IMAGEM_LAPSI="
+ _        _    ____  ____ ___
+| |      / \  |  _ \/ ___|_ _|
+| |     / _ \ | |_) \___ \| | 
+| |___ / ___ \|  __/ ___) | | 
+|_____/_/   \_\_|   |____/___|
+"
+
+print_imagem_mitm() {
+
+if [ $1 -eq 0 ]
+then
+    SETAS="\033[31;5mX----X\033[0m"
+else
+    SETAS="\033[33;5m<---->\033[0m"
+fi
+echo -e "
+
+  ${GREEN}$IP_ALVO_1                              ${GREEN}$IP_ALVO_2
+${GREEN}___________________                         ___________________
+ | _______________ |                         | _______________ |
+ | |XXXXXXXXXXXXX| |                         | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |        ${BLUE}   ___${NC}${GREEN}           | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |       ${BLUE}  /     \ ${NC}${GREEN}        | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |  $SETAS ${BLUE}|() ()|${NC} $SETAS ${GREEN} | |XXXXXXXXXXXXX| | 
+ | |XXXXXXXXXXXXX| |       ${BLUE}  \  ^  /${NC}${GREEN}         | |XXXXXXXXXXXXX| |
+ |_________________|        ${BLUE}  |||||${NC}${GREEN}          |_________________|
+     _[_______]                                 ${GREEN} _[_______]
+ ___[___________]___                         ___[___________]___
+|         [_____] []|                       |         [_____] []|
+|         [_____] []|                       |         [_____] []|
+L___________________J                       L___________________J${NC}
+
+"
+
+}
+
 
 ESC=$(printf '\033') RESET="${ESC}[0m" RED="${ESC}[31m"
 GREEN="${ESC}[32m" YELLOW="${ESC}[33m" BLUE="${ESC}[34m" MAGENTA="${ESC}[35m" WHITE="${ESC}[37m" DEFAULT="${ESC}[39m"
 
-greenprint() { printf "${GREEN}%s${RESET}\n" "$1"; }
+greenprint() { printf "${GREEN}%s${RESET}" "$1"; }
 blueprint() { printf "${BLUE}%s${RESET}\n" "$1"; }
 redprint() { printf "${RED}%s${RESET}\n" "$1"; }
-yellowprint() { printf "${YELLOW}%s${RESET}\n" "$1"; }
+yellowprint() { printf "${YELLOW}%s${RESET}" "$1"; }
 magentaprint() { printf "${MAGENTA}%s${RESET}\n" "$1"; }
 
 VERSAO=$(\
@@ -31,6 +73,7 @@ VERSAO=$(\
 )
 
 MENSAGEM_MENU_INICIAL="
+$IMAGEM_LAPSI
 $(greenprint "##########  TELA INICIAL  ##########")
 $(greenprint "Versão atual: $VERSAO")
 $(greenprint "Nota: Algumas funcionalidades podem demandar privilegios de superusuário\nNesses casos, será indicado com 'sudo' ao lado da opção.")
@@ -44,8 +87,9 @@ $(yellowprint "5.") $(redprint "Sair do programa")
 "
 
 MENSAGEM_MENU_ATAQUES="
+$IMAGEM_LAPSI
 $(greenprint "##########  LISTA DE ATAQUES  ##########")
-$(redprint "A UTILIZAÇÃO DE ATAQUES DEVE SER FEITA DE FORMA CONTROLADA. UTILIZE EM AMBIENTES PERMITIDOS")
+$(redprint "A UTILIZAÇÃO DE ATAQUES DEVE SER FEITA DE FORMA CONTROLADA. UTILIZE EM AMBIENTES PERMITIDOS.\nNÃO NOS RESPONSABILIZAMOS POR POSSÍVEIS DANOS CAUSADOS.")
 
 
 $(yellowprint "1.") $(blueprint "ARP poisoning/spoofing - Negação de serviço") $(magentaprint "(sudo)")
@@ -53,6 +97,7 @@ $(yellowprint "2.") $(blueprint "ARP poisoning/spoofing - Interceptação") $(ma
 $(yellowprint "3.") $(blueprint "Voltar")
 $(yellowprint "4.") $(redprint "Sair do programa")
 "
+
 
 checa_sudo(){
     if [ "$EUID" -ne 0 ]
@@ -81,6 +126,7 @@ arp_poison(){
     read -r IP_ALVO_1
     echo -e "Digite o endereço IP do segundo alvo"
     read -r IP_ALVO_2
+    print_imagem_mitm "$1" "$IP_ALVO_1" "$IP_ALVO_2"
     python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
     echo "$ESTADO_ANTERIOR" > $ARQUIVO_IP_FORWARD
 }
