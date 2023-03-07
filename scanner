@@ -2,7 +2,6 @@
 
 ###############################################################
 #	
-#	
 #Versão 1.0 - Arquivo inicial do script                      
 #Versão 1.1 - Separação por funções e opção de scan completo							      
 #Versão 1.2 - Introdução do menu de ataques, já com arp poisoning						      
@@ -61,6 +60,15 @@ redprint() { printf "${RED}%s${RESET}\n" "$1"; }
 yellowprint() { printf "${YELLOW}%s${RESET}" "$1"; }
 magentaprint() { printf "${MAGENTA}%s${RESET}\n" "$1"; }
 
+
+
+storage=$(mktemp IPs.XXXXX)
+
+#variavel global para retornar linha do IPs.XXXXX
+line=""
+
+trap 'rm $storage' EXIT
+
 VERSAO=$(\
     grep "^#Versão" $0 \
     | tail -1 \
@@ -75,6 +83,7 @@ $(greenprint "Versão atual: $VERSAO")
 $(greenprint "Nota: Algumas funcionalidades podem demandar privilegios de superusuário\nNesses casos, será indicado com 'sudo' ao lado da opção.")
 
 Para utilizar a ferramenta, escolha uma das seguintes opções:
+$(yellowprint "0.") $(blueprint "Digitar IP ou endereço de subrede")
 $(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan")
 $(yellowprint "2.") $(blueprint "Port scan em portas específicas")
 $(yellowprint "3.") $(blueprint "Ping sweep em toda subrede")
@@ -93,6 +102,14 @@ $(yellowprint "2.") $(blueprint "ARP poisoning/spoofing - Interceptação") $(ma
 $(yellowprint "3.") $(blueprint "Voltar")
 $(yellowprint "4.") $(redprint "Sair do programa")
 "
+
+get_IP() {
+	i=0
+	while read line; do
+		i=$(( i + 1 ))
+		case $i in $2) echo "$line"; break;; esac
+	done <"$1"
+}
 
 
 checa_sudo(){
@@ -170,18 +187,30 @@ menu_inicial(){
     echo -e "$MENSAGEM_MENU_INICIAL"	
     read -r opcao
     case $opcao in
-        '1')
-            echo -e "Digite o endereço da subrede no formato CIDR
-Exemplo: 192.168.1.0/24\n"
+	'0')
+            echo -e "Digite:\no endereço da subrede no formato CIDR\tExemplo: 192.168.1.0/24\no numero do IP\t\t\t\tExemplo: 192.168.0.30"
             read -r IP
-            scan_completo "$IP"
+	    echo $IP >> $storage
+        ;;
+        '1')
+	    nl $storage
+            echo -e "Digite o número de qual IP fazer scan\n"
+            read -r opcao
+	    if [[ $opcao =~ ^[+-]?[0-9]+$ ]]; then
+	    IP_local=$(get_IP $storage $opcao)
+    	    else
+	    IP_local=$opcao
+	    fi
+            scan_completo "$IP_local"
         ;;
         '2')
-            echo "Digite o IP alvo"
-            read -r IP
+            nl $storage
+            echo "Digite o numero do IP alvo"
+            read -r opcao
             echo "Digite a porta a ser analisada"
             read -r porta
-            resultado=$(nmap $IP -p $porta | grep -v Nmap)
+	    IP_local=$(get_IP $storage $opcao)
+            resultado=$(nmap $IP_local -p $porta | grep -v Nmap)
             if [[ $resultado == *"Host seems down"* ]];then
               echo -e "$(redprint "O host não parece estar ativo")"
             else
@@ -189,18 +218,21 @@ Exemplo: 192.168.1.0/24\n"
             fi
         ;;
         '3')
+            nl $storage
             echo "Digite a subrede no formato 10.0.0.0/24"
-            read -r IP
+            read -r opcao
+	    IP_local=$(get_IP $storage $opcao)
             echo "O ping sweep está sendo realizado..."
             echo -e "Os seguintes hosts estão ativos:\n"
             #nmap -sP $IP | grep "report" | cut -d " " -f5-
-            fping -g -s -a -i 1 -r 1 $IP 2> /dev/null
+            fping -g -s -a -i 1 -r 1 $IP_local 2> /dev/null
         ;;
         '4')
             menu_ataques
         ;;
         '5')
             #clear
+	    #rm $storage
             exit 0
         ;;
         *)
