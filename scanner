@@ -111,7 +111,7 @@ get_IP() {
 	done <"$1"
 }
 
-
+echo aaaa
 checa_sudo(){
     if [ "$EUID" -ne 0 ]
     then 
