@@ -83,7 +83,6 @@ $(greenprint "Versão atual: $VERSAO")
 $(greenprint "Nota: Algumas funcionalidades podem demandar privilegios de superusuário\nNesses casos, será indicado com 'sudo' ao lado da opção.")
 
 Para utilizar a ferramenta, escolha uma das seguintes opções:
-$(yellowprint "0.") $(blueprint "Digitar IP ou endereço de subrede")
 $(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan")
 $(yellowprint "2.") $(blueprint "Port scan em portas específicas")
 $(yellowprint "3.") $(blueprint "Ping sweep em toda subrede")
@@ -111,7 +110,22 @@ get_IP() {
 	done <"$1"
 }
 
-echo aaaa
+txt_file_use() {
+		if [[ $2 =~ ^[+-]?[0-9]+$ ]]; then
+	                IP=$(get_IP $1 $2)
+                else
+	                IP=$2
+			if grep -q "$2" $1
+		                then
+			                :
+		                else
+		                echo $2 >> $1
+			fi
+                fi
+		echo "$IP"
+
+}
+
 checa_sudo(){
     if [ "$EUID" -ne 0 ]
     then 
@@ -135,10 +149,15 @@ arp_poison(){
     ARQUIVO_IP_FORWARD="/proc/sys/net/ipv4/ip_forward"
     ESTADO_ANTERIOR=$(cat $ARQUIVO_IP_FORWARD)
     echo $1 > $ARQUIVO_IP_FORWARD
+    nl $storage
     echo -e "Digite o endereço IP do primeiro alvo"
-    read -r IP_ALVO_1
+    read -r opcao1
     echo -e "Digite o endereço IP do segundo alvo"
-    read -r IP_ALVO_2
+    read -r opcao2
+
+    IP_ALVO_1=$(txt_file_use $storage $opcao1)
+    IP_ALVO_2=$(txt_file_use $storage $opcao2)
+
     print_imagem_mitm "$1" "$IP_ALVO_1" "$IP_ALVO_2"
     python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
     echo "$ESTADO_ANTERIOR" > $ARQUIVO_IP_FORWARD
@@ -187,20 +206,13 @@ menu_inicial(){
     echo -e "$MENSAGEM_MENU_INICIAL"	
     read -r opcao
     case $opcao in
-	'0')
-            echo -e "Digite:\no endereço da subrede no formato CIDR\tExemplo: 192.168.1.0/24\no numero do IP\t\t\t\tExemplo: 192.168.0.30"
-            read -r IP
-	    echo $IP >> $storage
-        ;;
         '1')
 	    nl $storage
             echo -e "Digite o número de qual IP fazer scan\n"
             read -r opcao
-	    if [[ $opcao =~ ^[+-]?[0-9]+$ ]]; then
-	    IP_local=$(get_IP $storage $opcao)
-    	    else
-	    IP_local=$opcao
-	    fi
+	    #como é chamado
+	    IP_local=$(txt_file_use $storage $opcao)
+#	    nmap "$IP_local"
             scan_completo "$IP_local"
         ;;
         '2')
@@ -209,7 +221,7 @@ menu_inicial(){
             read -r opcao
             echo "Digite a porta a ser analisada"
             read -r porta
-	    IP_local=$(get_IP $storage $opcao)
+	    IP_local=$(txt_file_use $storage $opcao)
             resultado=$(nmap $IP_local -p $porta | grep -v Nmap)
             if [[ $resultado == *"Host seems down"* ]];then
               echo -e "$(redprint "O host não parece estar ativo")"
@@ -221,7 +233,7 @@ menu_inicial(){
             nl $storage
             echo "Digite a subrede no formato 10.0.0.0/24"
             read -r opcao
-	    IP_local=$(get_IP $storage $opcao)
+	    IP_local=$(txt_file_use $storage $opcao)
             echo "O ping sweep está sendo realizado..."
             echo -e "Os seguintes hosts estão ativos:\n"
             #nmap -sP $IP | grep "report" | cut -d " " -f5-
