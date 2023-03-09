@@ -6,8 +6,8 @@
 #Versão 1.0 - Arquivo inicial do script                      
 #Versão 1.1 - Separação por funções e opção de scan completo							      
 #Versão 1.2 - Introdução do menu de ataques, já com arp poisoning				
-#VERSÃO 1.3 - Repaginada na aparência e resolução de bugs
-#VERSÃO 1.4 - Checagem de dependências ao iniciar script
+#Versão 1.3 - Repaginada na aparência e resolução de bugs
+#Versão 1.4 - Checagem de dependências ao iniciar script
 #
 ###############################################################
 RED='\033[0;31m'
