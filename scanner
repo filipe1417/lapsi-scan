@@ -1,12 +1,13 @@
 #!/usr/bin/bash
 
 ###############################################################
-#	
-#	
+#
+#
 #Versão 1.0 - Arquivo inicial do script                      
 #Versão 1.1 - Separação por funções e opção de scan completo							      
-#Versão 1.2 - Introdução do menu de ataques, já com arp poisoning						      
-#Versão 1.3 - Repaginada na aparência e resolução de bugs
+#Versão 1.2 - Introdução do menu de ataques, já com arp poisoning				
+#VERSÃO 1.3 - Repaginada na aparência e resolução de bugs
+#VERSÃO 1.4 - Checagem de dependências ao iniciar script
 #
 ###############################################################
 RED='\033[0;31m'
@@ -21,36 +22,6 @@ IMAGEM_LAPSI="
 | |___ / ___ \|  __/ ___) | | 
 |_____/_/   \_\_|   |____/___|
 "
-
-print_imagem_mitm() {
-
-if [ $1 -eq 0 ]
-then
-    SETAS="\033[31;5mX----X\033[0m"
-else
-    SETAS="\033[33;5m<---->\033[0m"
-fi
-echo -e "
-
-  ${GREEN}$IP_ALVO_1                              ${GREEN}$IP_ALVO_2
-${GREEN}___________________                         ___________________
- | _______________ |                         | _______________ |
- | |XXXXXXXXXXXXX| |                         | |XXXXXXXXXXXXX| |
- | |XXXXXXXXXXXXX| |        ${BLUE}   ___${NC}${GREEN}           | |XXXXXXXXXXXXX| |
- | |XXXXXXXXXXXXX| |       ${BLUE}  /     \ ${NC}${GREEN}        | |XXXXXXXXXXXXX| |
- | |XXXXXXXXXXXXX| |  $SETAS ${BLUE}|() ()|${NC} $SETAS ${GREEN} | |XXXXXXXXXXXXX| | 
- | |XXXXXXXXXXXXX| |       ${BLUE}  \  ^  /${NC}${GREEN}         | |XXXXXXXXXXXXX| |
- |_________________|        ${BLUE}  |||||${NC}${GREEN}          |_________________|
-     _[_______]                                 ${GREEN} _[_______]
- ___[___________]___                         ___[___________]___
-|         [_____] []|                       |         [_____] []|
-|         [_____] []|                       |         [_____] []|
-L___________________J                       L___________________J${NC}
-
-"
-
-}
-
 
 ESC=$(printf '\033') RESET="${ESC}[0m" RED="${ESC}[31m"
 GREEN="${ESC}[32m" YELLOW="${ESC}[33m" BLUE="${ESC}[34m" MAGENTA="${ESC}[35m" WHITE="${ESC}[37m" DEFAULT="${ESC}[39m"
@@ -94,6 +65,45 @@ $(yellowprint "3.") $(blueprint "Voltar")
 $(yellowprint "4.") $(redprint "Sair do programa")
 "
 
+LISTA_DEPENDENCIAS=("nmap" "fping" "python3" "scapy")
+FALTA_DEPENDENCIAS=0
+
+checa_dependencias(){
+    for i in "${LISTA_DEPENDENCIAS[@]}"
+    do
+        if [[ $(which $i 2>&1 | grep "/$i") ]]; then
+            continue
+        else
+            if [[ $FALTA_DEPENDENCIAS -eq "0" ]]
+            then
+                FALTA_DEPENDENCIAS="1"
+                PROGRAMAS_PARA_INSTALAR=()
+            fi
+            echo -e "${RED}${BLUE}Dependência ${RED}$i${BLUE} não instalada${NC}"
+            PROGRAMAS_PARA_INSTALAR+=("$i")
+            
+        fi
+    done
+    if [[ $FALTA_DEPENDENCIAS -eq "1" ]]
+    then
+        echo -e "Com dependências não instaladas, o script não funcionará como deveria.\n"
+        echo -e "Digite 1 para que a instalação seja feita automaticamente
+Digite 2 para acessar o script mesmo assim ${RED}(não recomendado)${NC}
+Digite 2 para sair"
+        read -r escolha
+        case $escolha in
+            1)
+                sudo apt install -y $(echo ${PROGRAMAS_PARA_INSTALAR[@]})
+            ;;
+            2)
+                break
+            ;;
+            3)
+                exit 1
+            ;;
+        esac
+    fi
+}
 
 checa_sudo(){
     if [ "$EUID" -ne 0 ]
@@ -101,6 +111,34 @@ checa_sudo(){
         echo "Para utilizar essa função, inicie o script utilizando 'sudo'"
         exit
     fi
+}
+
+print_imagem_mitm() {
+
+if [ $1 -eq 0 ]
+then
+    SETAS="\033[31;5mX----X\033[0m"
+else
+    SETAS="\033[33;5m<---->\033[0m"
+fi
+echo -e "
+
+  ${GREEN}$IP_ALVO_1                              ${GREEN}$IP_ALVO_2
+${GREEN}___________________                         ___________________
+ | _______________ |                         | _______________ |
+ | |XXXXXXXXXXXXX| |                         | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |        ${BLUE}   ___${NC}${GREEN}           | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |       ${BLUE}  /     \ ${NC}${GREEN}        | |XXXXXXXXXXXXX| |
+ | |XXXXXXXXXXXXX| |  $SETAS ${BLUE}|() ()|${NC} $SETAS ${GREEN} | |XXXXXXXXXXXXX| | 
+ | |XXXXXXXXXXXXX| |       ${BLUE}  \  ^  /${NC}${GREEN}         | |XXXXXXXXXXXXX| |
+ |_________________|        ${BLUE}  |||||${NC}${GREEN}          |_________________|
+     _[_______]                                 ${GREEN} _[_______]
+ ___[___________]___                         ___[___________]___
+|         [_____] []|                       |         [_____] []|
+|         [_____] []|                       |         [_____] []|
+L___________________J                       L___________________J${NC}
+
+"
 }
 
 port_scan() {
@@ -136,7 +174,7 @@ scan_completo() {
 
     fping -g -s -a -i 1 -r 1 $1 >&3 2> /dev/null #ping sweep
 
-    nmap -Pn $(cat <&4) #port scan
+    nmap -Pn -sC -sV -O $(cat <&4) #port scan
 
     exec 3>&- # fechar o file descriptor
 }
@@ -168,7 +206,12 @@ menu_inicial(){
     clear
     unset opcao
     echo -e "$MENSAGEM_MENU_INICIAL"	
-    read -r opcao
+    #read -r opcao
+    read -r -e -d $'\n' -p '> ' opcao
+    #while IFS="" read -r -e -d $'\n' -p '> ' opcao; do 
+    #    echo "$opcao"
+    #    history -s "$opcao"
+    #done
     case $opcao in
         '1')
             echo -e "Digite o endereço da subrede no formato CIDR
@@ -214,6 +257,7 @@ Exemplo: 192.168.1.0/24\n"
 }
 
 main() {
+    checa_dependencias
     while true; do
         menu_inicial        
     done
