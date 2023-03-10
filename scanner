@@ -65,7 +65,7 @@ magentaprint() { printf "${MAGENTA}%s${RESET}\n" "$1"; }
 ARMAZENAMENTO=$(mktemp IPs.XXXXX)
 
 #variavel global para retornar linha do IPs.XXXXX
-line=""
+LINHA=""
 
 trap 'rm $ARMAZENAMENTO' EXIT
 
@@ -104,9 +104,9 @@ $(yellowprint "4.") $(redprint "Sair do programa")
 
 get_IP() {
 	i=0
-	while read line; do
+	while read LINHA; do
 		i=$(( i + 1 ))
-		case $i in $2) echo "$line"; break;; esac
+		case $i in $2) echo "$LINHA"; break;; esac
 	done <"$1"
 }
 
