@@ -62,12 +62,12 @@ magentaprint() { printf "${MAGENTA}%s${RESET}\n" "$1"; }
 
 
 
-storage=$(mktemp IPs.XXXXX)
+ARMAZENAMENTO=$(mktemp IPs.XXXXX)
 
 #variavel global para retornar linha do IPs.XXXXX
 line=""
 
-trap 'rm $storage' EXIT
+trap 'rm $ARMAZENAMENTO' EXIT
 
 VERSAO=$(\
     grep "^#Versão" $0 \
@@ -155,8 +155,8 @@ arp_poison(){
     echo -e "Digite o endereço IP do segundo alvo"
     read -r opcao2
 
-    IP_ALVO_1=$(txt_file_use $storage $opcao1)
-    IP_ALVO_2=$(txt_file_use $storage $opcao2)
+    IP_ALVO_1=$(txt_file_use $ARMAZENAMENTO $opcao1)
+    IP_ALVO_2=$(txt_file_use $ARMAZENAMENTO $opcao2)
 
     print_imagem_mitm "$1" "$IP_ALVO_1" "$IP_ALVO_2"
     python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
@@ -211,7 +211,7 @@ menu_inicial(){
             echo -e "Digite o número da rede para realizar o scan\n"
             read -r opcao
 	    #como é chamado
-	    IP_local=$(txt_file_use $storage $opcao)
+	    IP_local=$(txt_file_use $ARMAZENAMENTO $opcao)
 #	    nmap "$IP_local"
             scan_completo "$IP_local"
         ;;
@@ -221,7 +221,7 @@ menu_inicial(){
             read -r opcao
             echo "Digite a porta a ser analisada"
             read -r porta
-	    IP_local=$(txt_file_use $storage $opcao)
+	    IP_local=$(txt_file_use $ARMAZENAMENTO $opcao)
             resultado=$(nmap $IP_local -p $porta | grep -v Nmap)
             if [[ $resultado == *"Host seems down"* ]];then
               echo -e "$(redprint "O host não parece estar ativo")"
@@ -233,7 +233,7 @@ menu_inicial(){
             nl $storage
             echo "Digite a subrede no formato 10.0.0.0/24"
             read -r opcao
-	    IP_local=$(txt_file_use $storage $opcao)
+	    IP_local=$(txt_file_use $ARMAZENAMENTO $opcao)
             echo "O ping sweep está sendo realizado..."
             echo -e "Os seguintes hosts estão ativos:\n"
             #nmap -sP $IP | grep "report" | cut -d " " -f5-
