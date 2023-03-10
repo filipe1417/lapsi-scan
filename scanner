@@ -208,7 +208,7 @@ menu_inicial(){
     case $opcao in
         '1')
 	    nl $storage
-            echo -e "Digite o número de qual IP fazer scan\n"
+            echo -e "Digite o número da rede para realizar o scan\n"
             read -r opcao
 	    #como é chamado
 	    IP_local=$(txt_file_use $storage $opcao)
