@@ -46,7 +46,7 @@ $(greenprint "Versão atual: $VERSAO")
 $(greenprint "Nota: Algumas funcionalidades podem demandar privilegios de superusuário\nNesses casos, será indicado com 'sudo' ao lado da opção.")
 
 Para utilizar a ferramenta, escolha uma das seguintes opções:
-$(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan")
+$(yellowprint "1.") $(blueprint "Scan completo em toda rede - Inclui port scan") $(magentaprint "(sudo)")
 $(yellowprint "2.") $(blueprint "Port scan em portas específicas")
 $(yellowprint "3.") $(blueprint "Ping sweep em toda subrede")
 $(yellowprint "4.") $(blueprint "Menu de ataques")
@@ -150,16 +150,19 @@ ping_sweep() {
     echo "pingsweep"
 }
 
+leitura_entrada(){
+    read -r -e -d $'\n' -p '> ' $1
+}
+
 arp_poison(){
-    #Depois separar os echos e reads da ação em si
     checa_sudo
     ARQUIVO_IP_FORWARD="/proc/sys/net/ipv4/ip_forward"
     ESTADO_ANTERIOR=$(cat $ARQUIVO_IP_FORWARD)
     echo $1 > $ARQUIVO_IP_FORWARD
     echo -e "Digite o endereço IP do primeiro alvo"
-    read -r IP_ALVO_1
+    leitura_entrada IP_ALVO_1
     echo -e "Digite o endereço IP do segundo alvo"
-    read -r IP_ALVO_2
+    leitura_entrada IP_ALVO_2
     print_imagem_mitm "$1" "$IP_ALVO_1" "$IP_ALVO_2"
     python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
     echo "$ESTADO_ANTERIOR" > $ARQUIVO_IP_FORWARD
@@ -183,7 +186,7 @@ menu_ataques(){
     clear
     unset opcao
     echo -e "$MENSAGEM_MENU_ATAQUES"
-    read -r opcao
+    leitura_entrada opcao
 
     case $opcao in
         '1' | '2' )
@@ -207,23 +210,24 @@ menu_inicial(){
     unset opcao
     echo -e "$MENSAGEM_MENU_INICIAL"	
     #read -r opcao
-    read -r -e -d $'\n' -p '> ' opcao
+    leitura_entrada opcao
     #while IFS="" read -r -e -d $'\n' -p '> ' opcao; do 
     #    echo "$opcao"
     #    history -s "$opcao"
     #done
     case $opcao in
         '1')
+            checa_sudo
             echo -e "Digite o endereço da subrede no formato CIDR
 Exemplo: 192.168.1.0/24\n"
-            read -r IP
+            leitura_entrada IP
             scan_completo "$IP"
         ;;
         '2')
             echo "Digite o IP alvo"
-            read -r IP
+            leitura_entrada IP
             echo "Digite a porta a ser analisada"
-            read -r porta
+            leitura_entrada porta
             resultado=$(nmap $IP -p $porta | grep -v Nmap)
             if [[ $resultado == *"Host seems down"* ]];then
               echo -e "$(redprint "O host não parece estar ativo")"
@@ -233,25 +237,21 @@ Exemplo: 192.168.1.0/24\n"
         ;;
         '3')
             echo "Digite a subrede no formato 10.0.0.0/24"
-            read -r IP
+            leitura_entrada IP
             echo "O ping sweep está sendo realizado..."
             echo -e "Os seguintes hosts estão ativos:\n"
-            #nmap -sP $IP | grep "report" | cut -d " " -f5-
             fping -g -s -a -i 1 -r 1 $IP 2> /dev/null
         ;;
         '4')
             menu_ataques
         ;;
         '5')
-            #clear
             exit 0
         ;;
         *)
             echo "Opção inválida"
         ;;
     esac
-    #echo -e "\nDigite Enter para voltar"
-    #read -r -sN3 p
     printf "%s " "Press enter to continue"
     read ans
 }
