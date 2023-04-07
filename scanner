@@ -15,12 +15,38 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 BLUE='\033[0;34m'
 
+VM='\033[0;31m'
+VR='\033[0;32m'
+AZ='\033[0;34m'
+SET="\033[31;5mX----X\033[0m"
+PISCA="\033[5m"
+PARA_PISCA="\33[0m"
+
 IMAGEM_LAPSI="
  _        _    ____  ____ ___
 | |      / \  |  _ \/ ___|_ _|
 | |     / _ \ | |_) \___ \| | 
 | |___ / ___ \|  __/ ___) | | 
 |_____/_/   \_\_|   |____/___|
+"
+
+IMAGEM_SCAN="
+${AZ}
+ ___________    ___________    ___________
+|-----------|  |-----------|  |-----------|
+|           |  |           |  |           |
+|___________|  |___________|  |___________|                  
+|_________oo|  |_________oo|  |_________oo|                  
+      |              |              |
+ _____|_____    _____|_____    _____|_____ 
+${NC}                                     
+      ${VR} ${PISCA} \            |            /  
+         \           |           /
+          \       ${VM} _____${VR}${PISCA}        /
+           \      ${VM}/     \ ${VR}${PISCA}     /
+            \    ${VM}| () () |${VR}${PISCA}    /
+                  ${VM}\  ^  /${VR}
+                   ${VM}|||||${VR} ${NC}
 "
 
 ESC=$(printf '\033') RESET="${ESC}[0m" RED="${ESC}[31m"
@@ -198,19 +224,20 @@ arp_poison(){
 
     IP_ALVO_1=$(txt_file_use $ARMAZENAMENTO $opcao1)
     IP_ALVO_2=$(txt_file_use $ARMAZENAMENTO $opcao2)
-    
     print_imagem_mitm "$1" "$IP_ALVO_1" "$IP_ALVO_2"
     python3 auxiliares/ataques/arpPoison.py $IP_ALVO_1 $IP_ALVO_2
     echo "$ESTADO_ANTERIOR" > $ARQUIVO_IP_FORWARD
 }
 
 scan_completo() {
+    clear
     tmpfile=$(mktemp /tmp/ips.XXXXXX)
     # trabalhando com file descriptors para que em caso de crash o arquivo temporário ja vai ter sido apagado e o file descript é apagado também ao fechar o shell
     exec 3> "$tmpfile" # escrita - file descriptor 3
     exec 4< "$tmpfile" # leitura - file descriptor 4
     rm "$tmpfile"
 
+    echo -e "$IMAGEM_SCAN"
     fping -g -s -a -i 1 -r 1 $1 >&3 2> /dev/null #ping sweep
 
     #nmap -Pn -sC -sV -O $(cat <&4) #port scan
@@ -218,6 +245,7 @@ scan_completo() {
     do
         python3 ./auxiliares/python-portscan-rapido/portScan.py -m $ip
     done
+
 
     exec 3>&- # fechar o file descriptor
 }
@@ -298,11 +326,11 @@ Exemplo: 192.168.1.0/24\n"
             echo "Opção inválida"
         ;;
     esac
-    printf "%s " "Press enter to continue"
+    printf "%s " "Pressione Enter para continuar"
     read ans
 }
 
-main() {
+main() { 
     checa_dependencias
     while true; do
         menu_inicial        
